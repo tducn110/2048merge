@@ -1,0 +1,600 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.85);
+    transform: scale(1.04);
+  }
+}
+
+@keyframes squareBeacon {
+  0% {
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7);
+    border-color: #facc15;
+  }
+  50% {
+    box-shadow: 0 0 20px 6px rgba(234, 179, 8, 0.9);
+    border-color: #fef08a;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0);
+    border-color: #facc15;
+  }
+}
+
+@keyframes triplePulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.8));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 22px rgba(168, 85, 247, 0.9));
+  }
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20%) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -85%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -120%) scale(0.9);
+  }
+}
+
+@keyframes flyUpDirect {
+  0% {
+    transform: translateY(var(--fly-distance, 350px)) scale(0.9);
+    opacity: 0.95;
+  }
+  85% {
+    transform: translateY(-4px) scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Eating / Merge Pop Animation on target tile */
+@keyframes mergeChomp {
+  0% {
+    transform: scale(0.82);
+    filter: brightness(1.8);
+  }
+  28% {
+    transform: scale(1.28);
+    filter: brightness(1.4);
+    box-shadow: 0 0 32px 8px rgba(255, 255, 255, 0.9);
+  }
+  52% {
+    transform: scale(0.92);
+    filter: brightness(1.15);
+  }
+  76% {
+    transform: scale(1.06);
+    filter: brightness(1);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Incoming tile being sucked and eaten into the target tile */
+@keyframes absorbChomp {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  45% {
+    transform: translateY(-8px) scale(0.72);
+    opacity: 0.95;
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: translateY(-16px) scale(0.1);
+    opacity: 0;
+  }
+}
+
+/* Shockwave halo ring emitted from merged tile */
+@keyframes shockwaveHalo {
+  0% {
+    transform: scale(0.65);
+    opacity: 1;
+    border-width: 3.5px;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.85);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* Floating Add-in Score Badge directly at tile coordinates */
+@keyframes floatAddIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.5);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -14px) scale(1.2);
+  }
+  35% {
+    transform: translate(-50%, -24px) scale(1.05);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -42px) scale(0.98);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -58px) scale(0.85);
+  }
+}
+
+/* Floating Gem Add-in */
+@keyframes gemFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.5);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -12px) scale(1.15);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -32px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -48px) scale(0.8);
+  }
+}
+
+/* Adjacent domino slide into center during cascade */
+@keyframes slideIntoTarget {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(var(--slide-x, 0), var(--slide-y, 0)) scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--slide-x, 0), var(--slide-y, 0)) scale(0.1);
+    opacity: 0;
+  }
+}
+
+@keyframes cornerBeacon {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+    border-color: #f59e0b;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 24px 8px rgba(245, 158, 11, 0.95);
+    border-color: #fef08a;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes invertedTBeacon {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.7);
+    border-color: #d946ef;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 26px 9px rgba(217, 70, 239, 0.95);
+    border-color: #f5d0fe;
+    transform: scale(1.07);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 1.4s infinite ease-in-out;
+}
+
+.animate-corner-beacon {
+  animation: cornerBeacon 0.9s infinite ease-in-out;
+}
+
+.animate-inverted-t-beacon {
+  animation: invertedTBeacon 0.9s infinite ease-in-out;
+}
+
+.animate-square-beacon {
+  animation: squareBeacon 0.9s infinite ease-in-out;
+}
+
+.animate-triple-pulse {
+  animation: triplePulse 0.9s infinite ease-in-out;
+}
+
+/* Crisp, snappy merge pop */
+@keyframes mergePop {
+  0% {
+    transform: scale(0.86);
+    filter: brightness(1.25);
+  }
+  50% {
+    transform: scale(1.18);
+    filter: brightness(1.15);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.animate-merge-pop {
+  animation: mergePop 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-merge-chomp {
+  animation: mergeChomp 0.54s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-absorb-chomp {
+  animation: absorbChomp 0.24s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-shockwave-halo {
+  animation: shockwaveHalo 0.54s ease-out forwards;
+}
+
+.animate-float-addin {
+  animation: floatAddIn 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-gem-float {
+  animation: gemFloat 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Directional Liquid Water Drips ("Vệt Nước") based on merge direction */
+@keyframes waterDripDown {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top center;
+    opacity: 0;
+    filter: brightness(1.35) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  }
+  20% {
+    transform: scaleY(1.35);
+    transform-origin: top center;
+    opacity: 1;
+    filter: brightness(1.2) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+  }
+  45% {
+    transform: scaleY(1.05) translateY(1px);
+    transform-origin: top center;
+    opacity: 1;
+    filter: brightness(1.05) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+  }
+  75% {
+    transform: scaleY(0.95) translateY(3px);
+    transform-origin: top center;
+    opacity: 0.95;
+  }
+  100% {
+    transform: scaleY(0.15) translateY(9px);
+    transform-origin: top center;
+    opacity: 0;
+  }
+}
+
+@keyframes waterDripUp {
+  0% {
+    transform: scaleY(0);
+    transform-origin: bottom center;
+    opacity: 0;
+    filter: brightness(1.35) drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.3));
+  }
+  20% {
+    transform: scaleY(1.35);
+    transform-origin: bottom center;
+    opacity: 1;
+    filter: brightness(1.2) drop-shadow(0 -4px 8px rgba(0, 0, 0, 0.45));
+  }
+  45% {
+    transform: scaleY(1.05) translateY(-1px);
+    transform-origin: bottom center;
+    opacity: 1;
+    filter: brightness(1.05) drop-shadow(0 -4px 6px rgba(0, 0, 0, 0.35));
+  }
+  75% {
+    transform: scaleY(0.95) translateY(-3px);
+    transform-origin: bottom center;
+    opacity: 0.95;
+  }
+  100% {
+    transform: scaleY(0.15) translateY(-9px);
+    transform-origin: bottom center;
+    opacity: 0;
+  }
+}
+
+@keyframes waterDripLeft {
+  0% {
+    transform: scaleX(0);
+    transform-origin: right center;
+    opacity: 0;
+    filter: brightness(1.35) drop-shadow(-2px 0 4px rgba(0, 0, 0, 0.3));
+  }
+  20% {
+    transform: scaleX(1.35);
+    transform-origin: right center;
+    opacity: 1;
+    filter: brightness(1.2) drop-shadow(-4px 0 8px rgba(0, 0, 0, 0.45));
+  }
+  45% {
+    transform: scaleX(1.05) translateX(-1px);
+    transform-origin: right center;
+    opacity: 1;
+    filter: brightness(1.05) drop-shadow(-4px 0 6px rgba(0, 0, 0, 0.35));
+  }
+  75% {
+    transform: scaleX(0.95) translateX(-3px);
+    transform-origin: right center;
+    opacity: 0.95;
+  }
+  100% {
+    transform: scaleX(0.15) translateX(-9px);
+    transform-origin: right center;
+    opacity: 0;
+  }
+}
+
+@keyframes waterDripRight {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left center;
+    opacity: 0;
+    filter: brightness(1.35) drop-shadow(2px 0 4px rgba(0, 0, 0, 0.3));
+  }
+  20% {
+    transform: scaleX(1.35);
+    transform-origin: left center;
+    opacity: 1;
+    filter: brightness(1.2) drop-shadow(4px 0 8px rgba(0, 0, 0, 0.45));
+  }
+  45% {
+    transform: scaleX(1.05) translateX(1px);
+    transform-origin: left center;
+    opacity: 1;
+    filter: brightness(1.05) drop-shadow(4px 0 6px rgba(0, 0, 0, 0.35));
+  }
+  75% {
+    transform: scaleX(0.95) translateX(3px);
+    transform-origin: left center;
+    opacity: 0.95;
+  }
+  100% {
+    transform: scaleX(0.15) translateX(9px);
+    transform-origin: left center;
+    opacity: 0;
+  }
+}
+
+@keyframes waterDroplet {
+  0% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+  25% {
+    transform: translateY(3px) scale(1.3);
+    opacity: 1;
+  }
+  65% {
+    transform: translateY(12px) scale(1);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(22px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.animate-water-drip {
+  animation: waterDripDown 0.54s cubic-bezier(0.18, 0.92, 0.28, 1) forwards;
+}
+
+.animate-water-drip-down {
+  animation: waterDripDown 0.54s cubic-bezier(0.18, 0.92, 0.28, 1) forwards;
+}
+
+.animate-water-drip-up {
+  animation: waterDripUp 0.54s cubic-bezier(0.18, 0.92, 0.28, 1) forwards;
+}
+
+.animate-water-drip-left {
+  animation: waterDripLeft 0.54s cubic-bezier(0.18, 0.92, 0.28, 1) forwards;
+}
+
+.animate-water-drip-right {
+  animation: waterDripRight 0.54s cubic-bezier(0.18, 0.92, 0.28, 1) forwards;
+}
+
+.animate-water-droplet {
+  animation: waterDroplet 0.54s ease-out forwards;
+}
+
+/* Energy Meter Shimmer */
+@keyframes energyShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-energy-shimmer {
+  animation: energyShimmer 1.4s infinite linear;
+}
+
+/* Continuous low-intensity rumble vibration for Bonus Rush */
+@keyframes bonusRushRumble {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  15% {
+    transform: translate(-1.2px, 0.9px) rotate(-0.25deg);
+  }
+  30% {
+    transform: translate(1.4px, -0.8px) rotate(0.2deg);
+  }
+  45% {
+    transform: translate(-0.9px, -1.0px) rotate(-0.18deg);
+  }
+  60% {
+    transform: translate(1.1px, 1.1px) rotate(0.22deg);
+  }
+  75% {
+    transform: translate(-1.3px, 0.5px) rotate(-0.2deg);
+  }
+  90% {
+    transform: translate(0.8px, -0.9px) rotate(0.14deg);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+}
+
+.animate-bonus-rush-rumble {
+  animation: bonusRushRumble 0.14s infinite ease-in-out;
+  will-change: transform;
+}
+
+@keyframes bonusRushAuraPulse {
+  0%, 100% {
+    opacity: 0.45;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.25), inset 0 0 15px rgba(245, 158, 11, 0.15);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 32px rgba(245, 158, 11, 0.5), inset 0 0 24px rgba(245, 158, 11, 0.3);
+  }
+}
+
+.animate-bonus-rush-aura {
+  animation: bonusRushAuraPulse 1.2s infinite ease-in-out;
+}
+
+/* Smooth urgency pulse animation when Bonus Rush is nearly full (90%+ progress) */
+@keyframes bonusRushUrgentTrackPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+    border-color: rgba(245, 158, 11, 0.6);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 18px rgba(251, 191, 36, 0.85), 0 0 28px rgba(245, 158, 11, 0.45);
+    border-color: rgba(254, 240, 138, 0.95);
+  }
+}
+
+.animate-bonus-rush-urgent {
+  animation: bonusRushUrgentTrackPulse 1.0s infinite ease-in-out;
+  will-change: transform, box-shadow;
+}
+
+@keyframes bonusRushUrgentGlow {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+  }
+  50% {
+    filter: brightness(1.22) drop-shadow(0 0 14px rgba(251, 191, 36, 0.95));
+  }
+}
+
+.animate-bonus-rush-urgent-fill {
+  animation: bonusRushUrgentGlow 1.0s infinite ease-in-out;
+}
+
+.animate-energy-shimmer-fast {
+  animation: energyShimmer 0.75s infinite linear;
+}
+
+/* Center COMBO xN visual text layer animations */
+@keyframes centerComboShockwave {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-combo-shockwave {
+  animation: centerComboShockwave 0.65s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes comboRaysSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+.animate-combo-rays {
+  animation: comboRaysSpin 8s infinite linear;
+}
+
+@keyframes comboRaysSpinReverse {
+  0% {
+    transform: rotate(360deg) scale(1.05);
+  }
+  50% {
+    transform: rotate(180deg) scale(0.92);
+  }
+  100% {
+    transform: rotate(0deg) scale(1.05);
+  }
+}
+
+.animate-combo-rays-reverse {
+  animation: comboRaysSpinReverse 8s infinite linear;
+}

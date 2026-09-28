@@ -1,0 +1,6 @@
+{
+  "name": "2048 Merge 5x8",
+  "description": "Trò chơi giải đố 2048 bắn và ghép số 5x8 với nhận diện combo Vuông Góc 90° và Chữ T Ngược ⊥, hiệu ứng ăn khối merge chomp và nhịp độ mượt mà.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
