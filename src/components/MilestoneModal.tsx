@@ -5,6 +5,7 @@ import { CoinIcon } from './CoinIcon';
 import { ComboHistoryItem } from '../types';
 import { soundFx } from '../utils/audio';
 import gsap from 'gsap';
+import { CLS, Z } from '../shared/tokens';
 
 interface MilestoneModalProps {
   isOpen: boolean;
@@ -55,13 +56,16 @@ export const MilestoneModal: React.FC<MilestoneModalProps> = ({
   const [activeTab, setActiveTab] = useState<'milestones' | 'history'>('milestones');
 
   useEffect(() => {
-    if (isOpen && cardRef.current) {
-      gsap.fromTo(
-        cardRef.current,
-        { scale: 0.88, opacity: 0, y: 30 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: 'back.out(1.4)' }
-      );
-    }
+    if (!isOpen || !cardRef.current) return;
+    const el = cardRef.current;
+    gsap.fromTo(
+      el,
+      { scale: 0.88, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: 'back.out(1.4)' }
+    );
+    return () => {
+      gsap.killTweensOf(el);
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -120,7 +124,10 @@ export const MilestoneModal: React.FC<MilestoneModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md select-none">
+    <div
+      className={CLS.modalBackdrop}
+      style={{ zIndex: Z.modal }}
+    >
       <div
         ref={cardRef}
         className="w-full max-w-md bg-[#131722] border border-slate-700/80 rounded-3xl p-5 shadow-2xl flex flex-col items-center relative max-h-[90vh] overflow-hidden"
@@ -134,7 +141,7 @@ export const MilestoneModal: React.FC<MilestoneModalProps> = ({
             soundFx.triggerHaptic('tap');
             onClose();
           }}
-          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition active:scale-95 z-10"
+          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition active:scale-95 z-10 cursor-pointer"
           title="Đóng"
         >
           <X className="w-5 h-5" />

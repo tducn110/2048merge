@@ -2,6 +2,8 @@ import React from 'react';
 import { X, Sparkles, BoxSelect, Zap, ArrowUpCircle } from 'lucide-react';
 import { TileBlock } from './TileBlock';
 import { soundFx } from '../utils/audio';
+import { CTAButton } from '../shared/hud';
+import { CLS, Z } from '../shared/tokens';
 
 interface TutorialModalProps {
   isOpen: boolean;
@@ -12,8 +14,11 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
+    <div
+      className={CLS.modalBackdrop}
+      style={{ zIndex: Z.modal }}
+    >
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
@@ -25,7 +30,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
               soundFx.triggerHaptic('tap');
               onClose();
             }}
-            className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95"
+            className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -114,16 +119,16 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
           </div>
         </div>
 
-        {/* Action Button */}
-        <button
+        {/* Action Button with TrustMeBro CTAButton */}
+        <CTAButton
           onClick={() => {
             soundFx.triggerHaptic('tap');
             onClose();
           }}
-          className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm tracking-wide shadow-lg transition active:scale-98 mt-2"
+          className="w-full py-3 rounded-2xl font-black text-sm tracking-wide shadow-lg mt-2"
         >
           ĐÃ HIỂU, CHƠI NGAY!
-        </button>
+        </CTAButton>
       </div>
     </div>
   );

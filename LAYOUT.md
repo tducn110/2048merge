@@ -14,26 +14,34 @@
     App.tsx               — game state machine, event handlers, cascade orchestration
     index.css             — global styles, Tailwind base, CSS custom properties
     main.tsx              — React root mount
+    integrations/
+      wink/client.ts      — Wink SDK v1 integration (gameplayStart/Stop, submitScore, getLeaderboard, lifecycle)
     utils/
       gameLogic.ts        — pure game mechanics: shoot, merge, cascade, combo detection
-      audio.ts            — Web Audio API sound FX singleton (soundFx)
+      audio.ts            — Web Audio API sound FX singleton (soundFx, hostMuted, hostPaused)
       theme.ts            — tile color/style lookup (getTileStyle, formatTileValue)
+      leaderboardService.ts — UserProfile persistence, tier calc, Wink entries mapper
     components/
-      GameBoard.tsx       — 5×8 grid renderer, column hit zones, flying tile, AddIn popups
+      GameBoard.tsx       — PixiJS v8 5×8 canvas stage delegate (grid, tiles, animations, particles)
+      PixiGameBoard.tsx   — PixiJS v8 5×8 canvas renderer (3D tiles, shooting, domino slide, FX)
       TileBlock.tsx       — single tile: value, merge pop animation, ghost preview
       ShooterControls.tsx — current/next tile display, swap button, column aim touch zones
-      Header.tsx          — score, high score, gem count, mute, pause, booster buttons
+      Header.tsx          — score, high score, gem count, mute, pause, leaderboard, booster buttons
       PixiParticleCanvas.tsx — PixiJS particle system (merge explosions, square blasts)
       ParticleCanvas.tsx  — legacy Canvas 2D particle canvas (kept, unused in prod)
       TutorialModal.tsx   — first-run tutorial overlay
-      GameOverModal.tsx   — game over screen with final score
+      GameOverModal.tsx   — game over screen with final score + leaderboard shortcut
       PauseModal.tsx      — pause menu with resume / restart
       MilestoneModal.tsx  — high-tile achievement popup
+      LeaderboardModal.tsx — ranked leaderboard: real Wink leaderboard, standalone fallback, GSAP entry animation
       CoinIcon.tsx        — gem/coin SVG icon used in HUD
     shared/
       hud.tsx             — shared HUD React components (progress bars, badges)
       tokens.ts           — design tokens: COLORS, SHADOWS, Z, DUR (single source of truth)
-  index.html              — Vite HTML entry
+  tests/
+    winkIntegration.test.ts — Wink SDK v1 integration contract test suite
+  index.html              — Vite HTML entry (loads Wink SDK v1 canonical script)
+  wink.game.json          — Wink Dev Kit v1 static bundle manifest
   metadata.json           — app name, description, capability flags
   vite.config.ts          — Vite build config
   tsconfig.json           — TypeScript config

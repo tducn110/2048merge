@@ -75,3 +75,25 @@ export interface ComboHistoryItem {
   isRush?: boolean;
   timestamp: number;
 }
+
+export type PlayerTier =
+  | 'Đế Vương 32K'
+  | 'Thần Thoại 16K'
+  | 'Bậc Thầy 8K'
+  | 'Huyền Thoại 2048'
+  | 'Cao Thủ 1024'
+  | 'Tập Sự';
+
+export interface LeaderboardEntry {
+  id: string;
+  rank: number;
+  playerName: string;
+  avatar: string;
+  country: string;
+  score: number;
+  highestTile: number;
+  tier: PlayerTier;
+  isUser?: boolean;
+  dateAchieved: string;
+}
+

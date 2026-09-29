@@ -1,24 +1,30 @@
 import React from 'react';
-import { Trophy, RotateCcw, BoxSelect, Zap, Flame } from 'lucide-react';
+import { Trophy, RotateCcw, BoxSelect, Zap, Flame, BarChart2 } from 'lucide-react';
 import { GameStats } from '../types';
 import { formatTileValue } from '../utils/theme';
 import { CoinIcon } from './CoinIcon';
 import { soundFx } from '../utils/audio';
+import { CTAButton, DangerButton } from '../shared/hud';
+import { CLS, Z } from '../shared/tokens';
 
 interface GameOverModalProps {
   isOpen: boolean;
   stats: GameStats;
   onRestart: () => void;
+  onOpenLeaderboard: () => void;
 }
 
-export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, stats, onRestart }) => {
+export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, stats, onRestart, onOpenLeaderboard }) => {
   if (!isOpen) return null;
 
   const isNewHighScore = stats.score >= stats.highScore && stats.score > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn select-none">
-      <div className="w-full max-w-sm bg-slate-900 border-2 border-slate-700 rounded-3xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col items-center text-center">
+    <div
+      className={CLS.modalBackdrop}
+      style={{ zIndex: Z.modal }}
+    >
+      <div className="w-full max-w-sm bg-slate-900 border-2 border-slate-700 rounded-3xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col items-center text-center animate-in fade-in zoom-in-95">
         {/* Badge / Trophy */}
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.6)] mb-3 border-2 border-yellow-200">
           <Trophy className="w-8 h-8 text-amber-950" />
@@ -91,16 +97,28 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isOpen, stats, onR
           </div>
         )}
 
-        {/* Restart Action */}
-        <button
+        {/* Restart Action with TrustMeBro CTAButton */}
+        <CTAButton
           onClick={() => {
             soundFx.triggerHaptic('tap');
             onRestart();
           }}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-base tracking-wide flex items-center justify-center gap-2 shadow-xl transition active:scale-98"
+          className="w-full py-3.5 rounded-2xl font-black text-base shadow-xl"
         >
           <RotateCcw className="w-5 h-5" />
           <span>CHƠI LẠI VÁN MỚI</span>
+        </CTAButton>
+
+        {/* Leaderboard secondary button */}
+        <button
+          onClick={() => {
+            soundFx.triggerHaptic('tap');
+            onOpenLeaderboard();
+          }}
+          className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-stone-800 hover:bg-stone-700 border border-stone-600 text-stone-300 text-sm font-black transition active:scale-95"
+        >
+          <BarChart2 className="w-4 h-4 text-amber-400" />
+          <span>XEM BẢNG XẾP HẠNG</span>
         </button>
       </div>
     </div>

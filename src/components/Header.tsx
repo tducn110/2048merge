@@ -4,6 +4,8 @@ import { GameStats } from '../types';
 import { formatTileValue, getTileStyle } from '../utils/theme';
 import { CoinIcon } from './CoinIcon';
 import { soundFx } from '../utils/audio';
+import { IconBtn } from '../shared/hud';
+import { CLS, COLORS } from '../shared/tokens';
 
 interface HeaderProps {
   stats: GameStats;
@@ -11,6 +13,7 @@ interface HeaderProps {
   onToggleMute: () => void;
   onOpenPause: () => void;
   onOpenMilestone: () => void;
+  onOpenLeaderboard: () => void;
   onRestart: () => void;
   onUseBlackHole: () => void;
   onUseHammer: () => void;
@@ -25,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleMute,
   onOpenPause,
   onOpenMilestone,
+  onOpenLeaderboard,
   onRestart,
   onUseBlackHole,
   onUseHammer,
@@ -126,6 +130,18 @@ export const Header: React.FC<HeaderProps> = ({
             className="w-10 h-10 rounded-xl bg-[#202532] hover:bg-[#282e3e] active:scale-95 text-slate-300 flex items-center justify-center border border-slate-700/80 shadow-md transition"
           >
             <RotateCcw className="w-4 h-4" />
+          </button>
+
+          <button
+            id="btn-leaderboard"
+            onClick={() => {
+              soundFx.triggerHaptic('tap');
+              onOpenLeaderboard();
+            }}
+            title="Bảng xếp hạng"
+            className="w-10 h-10 rounded-xl bg-[#202532] hover:bg-amber-500/20 active:scale-95 text-amber-400 flex items-center justify-center border border-amber-500/30 shadow-md transition"
+          >
+            <Trophy className="w-4 h-4" />
           </button>
         </div>
 

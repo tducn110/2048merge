@@ -156,9 +156,16 @@ export const ParticleCanvas = forwardRef<ParticleCanvasHandle, ParticleCanvasPro
       window.addEventListener('resize', handleResize);
 
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        window.removeEventListener('resize', handleResize);
+        return;
+      }
+
+      let stopped = false;
 
       const render = () => {
+        if (stopped) return;
+
         const dpr = window.devicePixelRatio || 1;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
@@ -246,8 +253,15 @@ export const ParticleCanvas = forwardRef<ParticleCanvasHandle, ParticleCanvasPro
       animIdRef.current = requestAnimationFrame(render);
 
       return () => {
+        stopped = true;
         window.removeEventListener('resize', handleResize);
-        if (animIdRef.current) cancelAnimationFrame(animIdRef.current);
+        if (animIdRef.current) {
+          cancelAnimationFrame(animIdRef.current);
+          animIdRef.current = null;
+        }
+        // Drain pools so a second-mount cycle starts fresh
+        particlesRef.current = [];
+        shockwavesRef.current = [];
       };
     }, []);
 

@@ -4,6 +4,8 @@ import { GameStats } from '../types';
 import { CoinIcon } from './CoinIcon';
 import { soundFx } from '../utils/audio';
 import gsap from 'gsap';
+import { CTAButton, DangerButton, IconBtn } from '../shared/hud';
+import { CLS, Z } from '../shared/tokens';
 
 interface PauseModalProps {
   isOpen: boolean;
@@ -30,13 +32,16 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   const cardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (isOpen && cardRef.current) {
-      gsap.fromTo(
-        cardRef.current,
-        { scale: 0.85, opacity: 0, y: 20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: 'back.out(1.5)' }
-      );
-    }
+    if (!isOpen || !cardRef.current) return;
+    const el = cardRef.current;
+    gsap.fromTo(
+      el,
+      { scale: 0.85, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: 'back.out(1.5)' }
+    );
+    return () => {
+      gsap.killTweensOf(el);
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -44,7 +49,8 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md select-none"
+      className={CLS.modalBackdrop}
+      style={{ zIndex: Z.modal }}
     >
       <div
         ref={cardRef}
@@ -59,7 +65,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
             soundFx.triggerHaptic('tap');
             onResume();
           }}
-          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition active:scale-95"
+          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition active:scale-95 cursor-pointer"
           title="Đóng"
         >
           <X className="w-5 h-5" />
@@ -120,7 +126,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
             soundFx.triggerHaptic('tap');
             onOpenMilestone();
           }}
-          className="w-full mb-4 py-2.5 px-3 rounded-2xl bg-[#1e2433] hover:bg-[#252d40] border border-indigo-500/30 flex items-center justify-between text-left transition active:scale-98"
+          className="w-full mb-4 py-2.5 px-3 rounded-2xl bg-[#1e2433] hover:bg-[#252d40] border border-indigo-500/30 flex items-center justify-between text-left transition active:scale-98 cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs border border-indigo-400/30">
@@ -136,17 +142,17 @@ export const PauseModal: React.FC<PauseModalProps> = ({
 
         {/* Action Buttons */}
         <div className="w-full flex flex-col gap-2.5">
-          {/* Resume Button */}
-          <button
+          {/* Resume Button with TrustMeBro CTAButton */}
+          <CTAButton
             onClick={() => {
               soundFx.triggerHaptic('tap');
               onResume();
             }}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-base tracking-wide flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(16,185,129,0.4)] active:scale-98 transition"
+            className="w-full py-3.5 rounded-2xl font-black text-base shadow-[0_4px_16px_rgba(245,158,11,0.4)]"
           >
             <Play className="w-5 h-5 fill-current" />
             <span>Tiếp Tục Chơi</span>
-          </button>
+          </CTAButton>
 
           {/* Sound & Tutorial row */}
           <div className="grid grid-cols-2 gap-2">
@@ -155,7 +161,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
                 soundFx.triggerHaptic('tap');
                 onToggleMute();
               }}
-              className="py-2.5 px-3 rounded-xl bg-[#1f2533] hover:bg-[#272f42] border border-slate-700/70 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95"
+              className="py-2.5 px-3 rounded-xl bg-[#1f2533] hover:bg-[#272f42] border border-slate-700/70 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
             >
               {isMuted ? (
                 <>
@@ -175,24 +181,24 @@ export const PauseModal: React.FC<PauseModalProps> = ({
                 soundFx.triggerHaptic('tap');
                 onOpenTutorial();
               }}
-              className="py-2.5 px-3 rounded-xl bg-[#1f2533] hover:bg-[#272f42] border border-slate-700/70 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95"
+              className="py-2.5 px-3 rounded-xl bg-[#1f2533] hover:bg-[#272f42] border border-slate-700/70 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
             >
               <HelpCircle className="w-4 h-4 text-amber-400" />
               <span>Hướng Dẫn</span>
             </button>
           </div>
 
-          {/* Restart Button */}
-          <button
+          {/* Restart Button with TrustMeBro DangerButton */}
+          <DangerButton
             onClick={() => {
               soundFx.triggerHaptic('tap');
               onRestart();
             }}
-            className="w-full py-2.5 rounded-xl bg-[#1a1e29] hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-slate-800 hover:border-rose-900/60 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95"
+            className="w-full py-2.5 rounded-xl font-bold text-xs"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Chơi Lại Ván Mới</span>
-          </button>
+          </DangerButton>
         </div>
       </div>
     </div>

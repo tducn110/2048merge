@@ -38,6 +38,8 @@ import { TutorialModal } from './components/TutorialModal';
 import { GameOverModal } from './components/GameOverModal';
 import { PauseModal } from './components/PauseModal';
 import { MilestoneModal } from './components/MilestoneModal';
+import { LeaderboardModal } from './components/LeaderboardModal';
+import { winkGame, type WinkRound } from './integrations/wink/client';
 
 interface UndoState {
   grid: Grid;
@@ -317,6 +319,44 @@ export default function App() {
   const [gameOverOpen, setGameOverOpen] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [milestoneOpen, setMilestoneOpen] = useState<boolean>(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState<boolean>(false);
+  const activeRoundRef = useRef<WinkRound | null>(null);
+
+  // Bind Wink SDK lifecycle and start initial gameplay round
+  useEffect(() => {
+    activeRoundRef.current = winkGame.startRound();
+    const unbind = winkGame.bindLifecycle({
+      onPause: () => {
+        soundFx.setHostPaused(true);
+        setIsPaused(true);
+      },
+      onResume: () => {
+        soundFx.setHostPaused(false);
+        setIsPaused(false);
+      },
+      onMute: () => {
+        soundFx.setHostMuted(true);
+        setIsMuted(soundFx.getEffectiveMuted());
+      },
+      onUnmute: () => {
+        soundFx.setHostMuted(false);
+        setIsMuted(soundFx.getEffectiveMuted());
+      },
+      onLocale: (locale) => {
+        if (typeof document !== 'undefined') {
+          document.documentElement.lang = locale.startsWith('vi') ? 'vi' : 'en';
+        }
+      },
+    });
+
+    return () => {
+      unbind();
+      if (activeRoundRef.current) {
+        winkGame.completeRound(activeRoundRef.current);
+        activeRoundRef.current = null;
+      }
+    };
+  }, []);
 
   // Powerups & Tools
   const [hammerMode, setHammerMode] = useState<boolean>(false);
@@ -424,69 +464,92 @@ export default function App() {
   } | null>(null);
   const centerComboTextRef = useRef<HTMLDivElement | null>(null);
 
+  const lastCenterComboRef = useRef<{ combo: number; time: number }>({ combo: 0, time: 0 });
+
   // Trigger Center 'COMBO xN' Visual Text Layer during combo chain (3x+)
   // Dynamically alters background gradient intensity and rotation speed when multiplier > 3
   const triggerCenterComboOverlay = useCallback((combo: number, explicitMultiplier?: number) => {
     if (combo < 3) return;
+
+    const now = Date.now();
+    // Deduplicate consecutive triggers for the exact same combo within 300ms
+    if (lastCenterComboRef.current.combo === combo && now - lastCenterComboRef.current.time < 300) {
+      return;
+    }
+    lastCenterComboRef.current = { combo, time: now };
 
     const currentMultiplier =
       explicitMultiplier !== undefined
         ? explicitMultiplier
         : Math.max(combo, cascadeMultiplierRef.current || 1);
 
-    setCenterComboText({ combo, multiplier: currentMultiplier, id: Date.now() });
-
-    requestAnimationFrame(() => {
-      if (centerComboTextRef.current) {
-        const el = centerComboTextRef.current;
-        gsap.killTweensOf(el);
-
-        const isMythic = combo >= 5;
-        const popScale = isMythic ? 1.35 : combo === 4 ? 1.25 : 1.15;
-
-        gsap
-          .timeline({
-            onComplete: () => {
-              setCenterComboText(null);
-            },
-          })
-          .fromTo(
-            el,
-            {
-              scale: 0.25,
-              opacity: 0,
-              y: 20,
-              rotation: (Math.random() - 0.5) * 8,
-            },
-            {
-              scale: popScale,
-              opacity: 1,
-              y: 0,
-              rotation: 0,
-              duration: 0.16,
-              ease: 'back.out(2.4)',
-            }
-          )
-          .to(el, {
-            scale: 1.0,
-            duration: 0.1,
-            ease: 'power1.out',
-          })
-          // Hold visible briefly for high-intensity audiovisual alignment
-          .to(el, {
-            duration: isMythic ? 0.45 : 0.35,
-          })
-          // Explosive dissolve outwards & upwards
-          .to(el, {
-            scale: popScale * 1.2,
-            opacity: 0,
-            y: -24,
-            duration: 0.24,
-            ease: 'power2.in',
-          });
-      }
-    });
+    setCenterComboText({ combo, multiplier: currentMultiplier, id: now });
   }, []);
+
+  // Declarative animation & guaranteed dismissal for Center Combo Text Overlay
+  // Runs after DOM ref is mounted and includes a guaranteed fallback timer so it never gets stuck
+  useEffect(() => {
+    if (!centerComboText) return;
+
+    const el = centerComboTextRef.current;
+    if (el) {
+      gsap.killTweensOf(el);
+
+      const isMythic = centerComboText.combo >= 5;
+      const popScale = isMythic ? 1.35 : centerComboText.combo === 4 ? 1.25 : 1.15;
+
+      gsap
+        .timeline({
+          onComplete: () => {
+            setCenterComboText(null);
+          },
+        })
+        .fromTo(
+          el,
+          {
+            scale: 0.25,
+            opacity: 0,
+            y: 20,
+            rotation: (Math.random() - 0.5) * 8,
+          },
+          {
+            scale: popScale,
+            opacity: 1,
+            y: 0,
+            rotation: 0,
+            duration: 0.16,
+            ease: 'back.out(2.4)',
+          }
+        )
+        .to(el, {
+          scale: 1.0,
+          duration: 0.1,
+          ease: 'power1.out',
+        })
+        .to(el, {
+          duration: isMythic ? 0.45 : 0.35,
+        })
+        .to(el, {
+          scale: popScale * 1.2,
+          opacity: 0,
+          y: -24,
+          duration: 0.24,
+          ease: 'power2.in',
+        });
+    }
+
+    // Safety fallback timer: guarantee dismissal after 1350ms even if GSAP is interrupted
+    const timer = setTimeout(() => {
+      setCenterComboText(null);
+    }, 1350);
+
+    return () => {
+      clearTimeout(timer);
+      if (el) {
+        gsap.killTweensOf(el);
+      }
+    };
+  }, [centerComboText?.id]);
 
   // GSAP Camera Shake (tactile screen vibration effect on impact)
   const triggerCameraShake = useCallback(
@@ -544,7 +607,7 @@ export default function App() {
     []
   );
 
-  // Show & upgrade growing Multiplier badge with GSAP pop animation
+  // Show & upgrade growing Multiplier badge
   const showMultiplierBadge = useCallback(
     (multiplier: number) => {
       cascadeMultiplierRef.current = multiplier;
@@ -565,43 +628,6 @@ export default function App() {
       if (multiplier >= 3) {
         triggerCenterComboOverlay(multiplier, multiplier);
       }
-
-      // GSAP punch-in pop animation scaling in size and intensity with each link
-      requestAnimationFrame(() => {
-        if (multiplierBadgeRef.current) {
-          const el = multiplierBadgeRef.current;
-          gsap.killTweensOf(el);
-
-          const baseScale =
-            multiplier >= 5 ? 1.35 : multiplier === 4 ? 1.25 : multiplier === 3 ? 1.15 : 1.0;
-          const popScale = baseScale * 1.35;
-
-          gsap
-            .timeline()
-            .fromTo(
-              el,
-              {
-                scale: baseScale * 0.35,
-                opacity: 0,
-                y: -18,
-                rotation: (Math.random() - 0.5) * 14,
-              },
-              {
-                scale: popScale,
-                opacity: 1,
-                y: 0,
-                rotation: 0,
-                duration: 0.22,
-                ease: 'back.out(2.4)',
-              }
-            )
-            .to(el, {
-              scale: baseScale,
-              duration: 0.14,
-              ease: 'power2.out',
-            });
-        }
-      });
     },
     [triggerCameraShake, triggerCenterComboOverlay]
   );
@@ -610,22 +636,77 @@ export default function App() {
   const hideMultiplierBadge = useCallback(() => {
     if (multiplierBadgeRef.current) {
       const el = multiplierBadgeRef.current;
+      gsap.killTweensOf(el);
       gsap.to(el, {
         scale: 1.25,
         opacity: 0,
         y: -15,
-        duration: 0.3,
+        duration: 0.25,
         ease: 'power2.in',
         onComplete: () => {
           setCascadeMultiplier(null);
           cascadeMultiplierRef.current = 1;
         },
       });
+      // Fallback timer: ensure state is cleared even if GSAP onComplete doesn't fire
+      setTimeout(() => {
+        setCascadeMultiplier(null);
+        cascadeMultiplierRef.current = 1;
+      }, 300);
     } else {
       setCascadeMultiplier(null);
       cascadeMultiplierRef.current = 1;
     }
   }, []);
+
+  // Declarative punch-in animation and max-lifetime safety timeout for Multiplier Badge
+  useEffect(() => {
+    if (!cascadeMultiplier) return;
+
+    const el = multiplierBadgeRef.current;
+    if (el) {
+      gsap.killTweensOf(el);
+
+      const multiplier = cascadeMultiplier.multiplier;
+      const baseScale =
+        multiplier >= 5 ? 1.35 : multiplier === 4 ? 1.25 : multiplier === 3 ? 1.15 : 1.0;
+      const popScale = baseScale * 1.35;
+
+      gsap
+        .timeline()
+        .fromTo(
+          el,
+          {
+            scale: baseScale * 0.35,
+            opacity: 0,
+            y: -18,
+            rotation: (Math.random() - 0.5) * 14,
+          },
+          {
+            scale: popScale,
+            opacity: 1,
+            y: 0,
+            rotation: 0,
+            duration: 0.22,
+            ease: 'back.out(2.4)',
+          }
+        )
+        .to(el, {
+          scale: baseScale,
+          duration: 0.14,
+          ease: 'power2.out',
+        });
+    }
+
+    // Safety fallback timeout: multiplier badge should never stay active longer than 3.5s
+    const safetyTimer = setTimeout(() => {
+      hideMultiplierBadge();
+    }, 3500);
+
+    return () => {
+      clearTimeout(safetyTimer);
+    };
+  }, [cascadeMultiplier?.multiplier, hideMultiplierBadge]);
 
   // Sync high score & gems to localStorage
   useEffect(() => {
@@ -652,8 +733,8 @@ export default function App() {
 
   // Toggle Mute
   const handleToggleMute = useCallback(() => {
-    const muted = soundFx.toggleMute();
-    setIsMuted(muted);
+    soundFx.toggleMute();
+    setIsMuted(soundFx.getEffectiveMuted());
   }, []);
 
   // Add floating notification
@@ -670,6 +751,10 @@ export default function App() {
         ...prev,
         { id, x, y, text, subtext, color: '#facc15', type },
       ]);
+      // Guaranteed safety fallback: remove notification after 1500ms even if onAnimationEnd drops
+      setTimeout(() => {
+        setFloatingNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, 1500);
     },
     []
   );
@@ -677,6 +762,15 @@ export default function App() {
   const removeNotification = useCallback((id: string) => {
     setFloatingNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
+
+  // Safety timeout: activeSpecialCombo beacon highlight should never stick longer than 1s
+  useEffect(() => {
+    if (!activeSpecialCombo) return;
+    const timer = setTimeout(() => {
+      setActiveSpecialCombo(null);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [activeSpecialCombo]);
 
   // In-board Add-In popups directly anchored to tile (row, col)
   const triggerAddIn = useCallback(
@@ -714,6 +808,15 @@ export default function App() {
   const handleRestart = useCallback(() => {
     soundFx.triggerHaptic('tap');
     hideMultiplierBadge();
+    setCenterComboText(null);
+    setCascadeMultiplier(null);
+    cascadeMultiplierRef.current = 1;
+    setFloatingNotifications([]);
+    setAddIns([]);
+    if (activeRoundRef.current) {
+      winkGame.completeRound(activeRoundRef.current);
+    }
+    activeRoundRef.current = winkGame.startRound();
     const newGrid = generateInitialGrid();
     const newCur = getRandomSpawnValue(8);
     const newNext = getRandomSpawnValue(8);
@@ -1290,6 +1393,8 @@ export default function App() {
       triggerCameraShake,
       showMultiplierBadge,
       triggerCenterComboOverlay,
+      registerMergeForBonusRush,
+      recordComboHistory,
     ]
   );
 
@@ -1352,131 +1457,147 @@ export default function App() {
       ]);
 
       setIsProcessing(true);
-      soundFx.playShoot();
-      soundFx.triggerHaptic('light');
+      try {
+        soundFx.playShoot();
+        soundFx.triggerHaptic('light');
 
-      const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+        const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-      // 1. Tile launches and shoots straight upward towards targetRow (snappy, smooth)
-      const distance = 8 - preview.targetRow;
-      const flyDuration = Math.min(220, Math.max(140, distance * 18));
+        // 1. Tile launches and shoots straight upward towards targetRow (snappy, smooth)
+        const distance = 8 - preview.targetRow;
+        const flyDuration = Math.min(220, Math.max(140, distance * 18));
 
-      setFlyingTile({
-        col,
-        fromRow: 8,
-        targetRow: preview.targetRow,
-        value: currentValue,
-        isMerge: preview.isMerge,
-      });
-
-      await sleep(flyDuration);
-
-      let stepScore = 0;
-      let highestReached = stats.highestTile;
-      let newGrid = createEmptyGrid();
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 5; c++) {
-          newGrid[r][c] = grid[r][c];
-        }
-      }
-
-      if (preview.isMerge && preview.mergedValue) {
-        // Remove flying tile immediately - no absorption pause or loading delay!
-        setFlyingTile(null);
-
-        const isRush = isBonusRushActiveRef.current;
-        const baseVal = preview.mergedValue;
-        const mergedVal = isRush ? baseVal * 2 : baseVal;
-        stepScore += mergedVal;
-        highestReached = Math.max(highestReached, baseVal);
-        registerMergeForBonusRush(1);
-
-        soundFx.playMerge(baseVal, 1);
-        soundFx.triggerHaptic('medium');
-        triggerCameraShake('medium');
-        emitParticlesAt(preview.targetRow, col, isRush ? '#fbbf24' : '#f59e0b', 26);
-        triggerAddIn(preview.targetRow, col, mergedVal, 2, undefined, isRush ? '2X RUSH!' : undefined);
-        addNotification(`+${mergedVal}`, isRush ? '2X RUSH! 🔥' : undefined, 'score');
-
-        // Target tile undergoes instant crisp merge pop
-        newGrid[preview.targetRow][col] = {
-          id: `tile-${Date.now()}-${preview.targetRow}-${col}`,
-          value: mergedVal,
-          row: preview.targetRow,
+        setFlyingTile({
           col,
-          isMerging: true,
-          mergeDirections: ['down'],
-        };
-        setGrid([...newGrid]);
-
-        // Snappy pop delay (160ms) - completely eliminating the old 220ms + 550ms freeze
-        await sleep(160);
-      } else {
-        // Settle into empty slot
-        setFlyingTile(null);
-        soundFx.playSettle();
-        if (isExistingCol) {
-          triggerCameraShake('light');
-        }
-        newGrid[preview.targetRow][col] = {
-          id: `tile-${Date.now()}-${preview.targetRow}-${col}`,
+          fromRow: 8,
+          targetRow: preview.targetRow,
           value: currentValue,
-          row: preview.targetRow,
-          col,
-        };
-        setGrid([...newGrid]);
-        await sleep(80);
+          isMerge: preview.isMerge,
+        });
+
+        await sleep(flyDuration);
+
+        let stepScore = 0;
+        let highestReached = stats.highestTile;
+        let newGrid = createEmptyGrid();
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 5; c++) {
+            newGrid[r][c] = grid[r][c];
+          }
+        }
+
+        if (preview.isMerge && preview.mergedValue) {
+          // Remove flying tile immediately - no absorption pause or loading delay!
+          setFlyingTile(null);
+
+          const isRush = isBonusRushActiveRef.current;
+          const baseVal = preview.mergedValue;
+          const mergedVal = isRush ? baseVal * 2 : baseVal;
+          stepScore += mergedVal;
+          highestReached = Math.max(highestReached, baseVal);
+          registerMergeForBonusRush(1);
+
+          soundFx.playMerge(baseVal, 1);
+          soundFx.triggerHaptic('medium');
+          triggerCameraShake('medium');
+          emitParticlesAt(preview.targetRow, col, isRush ? '#fbbf24' : '#f59e0b', 26);
+          triggerAddIn(preview.targetRow, col, mergedVal, 2, undefined, isRush ? '2X RUSH!' : undefined);
+          addNotification(`+${mergedVal}`, isRush ? '2X RUSH! 🔥' : undefined, 'score');
+
+          // Target tile undergoes instant crisp merge pop
+          newGrid[preview.targetRow][col] = {
+            id: `tile-${Date.now()}-${preview.targetRow}-${col}`,
+            value: mergedVal,
+            row: preview.targetRow,
+            col,
+            isMerging: true,
+            mergeDirections: ['down'],
+          };
+          setGrid([...newGrid]);
+
+          // Snappy pop delay (160ms) - completely eliminating the old 220ms + 550ms freeze
+          await sleep(160);
+        } else {
+          // Settle into empty slot
+          setFlyingTile(null);
+          soundFx.playSettle();
+          if (isExistingCol) {
+            triggerCameraShake('light');
+          }
+          newGrid[preview.targetRow][col] = {
+            id: `tile-${Date.now()}-${preview.targetRow}-${col}`,
+            value: currentValue,
+            row: preview.targetRow,
+            col,
+          };
+          setGrid([...newGrid]);
+          await sleep(80);
+        }
+
+        // Compact column
+        newGrid = compactGridUpwards(newGrid).newGrid;
+        setGrid(newGrid);
+
+        // Brief pause before cascading chain begins
+        await sleep(60);
+
+        // Run Cascade Chain check (Chữ T Ngược ⊥, Vuông Góc 90°, Adjacent dominoes)
+        const cascadeResult = await resolveCascadeChain(newGrid, preview.isMerge ? 2 : 1);
+        newGrid = cascadeResult.finalGrid;
+        stepScore += cascadeResult.addedScore;
+        highestReached = Math.max(highestReached, cascadeResult.maxTile);
+
+        // If a multiplier badge was active during chain merges, hold it for a moment then smoothly fade out
+        if (cascadeMultiplierRef.current >= 2) {
+          await sleep(550);
+          hideMultiplierBadge();
+        }
+
+        // Clear any remaining isMerging states
+        const settledGrid = newGrid.map((row) =>
+          row.map((cell) => (cell ? { ...cell, isMerging: false } : null))
+        );
+        setGrid(settledGrid);
+
+        // Update stats and reward gems
+        const addedGems = (preview.isMerge ? 2 : 0) + (cascadeResult.addedScore > 0 ? 3 : 0);
+        setStats((prev) => ({
+          ...prev,
+          score: prev.score + stepScore,
+          gems: prev.gems + addedGems,
+          highestTile: highestReached,
+          totalMerges: prev.totalMerges + (stepScore > 0 ? 1 : 0),
+          comboCount: 0,
+        }));
+
+        // Advance incoming values
+        const nextSpawn = getRandomSpawnValue(highestReached);
+        setCurrentValue(nextValue);
+        setNextValue(nextSpawn);
+
+        // Check for Game Over condition
+        if (isGameOver(settledGrid, nextValue)) {
+          soundFx.playGameOver();
+          soundFx.triggerHaptic('heavy');
+          const finalScore = stats.score + stepScore;
+          if (activeRoundRef.current) {
+            winkGame.completeRound(activeRoundRef.current, {
+              highestTile: highestReached,
+              finalScore,
+            });
+            activeRoundRef.current = null;
+          }
+          void winkGame.submitFinalScore({
+            score: finalScore,
+            highestTile: highestReached,
+            gameMode: '5x8-classic',
+          }).catch(() => {});
+          void winkGame.refreshLeaderboard({ force: true }).catch(() => {});
+          setGameOverOpen(true);
+        }
+      } finally {
+        setIsProcessing(false);
       }
-
-      // Compact column
-      newGrid = compactGridUpwards(newGrid).newGrid;
-      setGrid(newGrid);
-
-      // Brief pause before cascading chain begins
-      await sleep(60);
-
-      // Run Cascade Chain check (Chữ T Ngược ⊥, Vuông Góc 90°, Adjacent dominoes)
-      const cascadeResult = await resolveCascadeChain(newGrid, preview.isMerge ? 2 : 1);
-      newGrid = cascadeResult.finalGrid;
-      stepScore += cascadeResult.addedScore;
-      highestReached = Math.max(highestReached, cascadeResult.maxTile);
-
-      // If a multiplier badge was active during chain merges, hold it for a moment then smoothly fade out
-      if (cascadeMultiplierRef.current >= 2) {
-        await sleep(550);
-        hideMultiplierBadge();
-      }
-
-      // Clear any remaining isMerging states
-      const settledGrid = newGrid.map((row) =>
-        row.map((cell) => (cell ? { ...cell, isMerging: false } : null))
-      );
-      setGrid(settledGrid);
-
-      // Update stats and reward gems
-      const addedGems = (preview.isMerge ? 2 : 0) + (cascadeResult.addedScore > 0 ? 3 : 0);
-      setStats((prev) => ({
-        ...prev,
-        score: prev.score + stepScore,
-        gems: prev.gems + addedGems,
-        highestTile: highestReached,
-        totalMerges: prev.totalMerges + (stepScore > 0 ? 1 : 0),
-        comboCount: 0,
-      }));
-
-      // Advance incoming values
-      const nextSpawn = getRandomSpawnValue(highestReached);
-      setCurrentValue(nextValue);
-      setNextValue(nextSpawn);
-
-      // Check for Game Over condition
-      if (isGameOver(settledGrid, nextValue)) {
-        soundFx.playGameOver();
-        soundFx.triggerHaptic('heavy');
-        setGameOverOpen(true);
-      }
-
-      setIsProcessing(false);
     },
     [
       isProcessing,
@@ -1509,6 +1630,7 @@ export default function App() {
         onToggleMute={handleToggleMute}
         onOpenPause={() => setIsPaused(true)}
         onOpenMilestone={() => setMilestoneOpen(true)}
+        onOpenLeaderboard={() => setLeaderboardOpen(true)}
         onRestart={handleRestart}
         onUseBlackHole={handleUseBlackHole}
         onUseHammer={handleUseHammer}
@@ -1535,15 +1657,9 @@ export default function App() {
         />
 
         <div ref={boardContainerRef} className="relative w-full flex items-center justify-center">
-          {/* Visual FX & Particle Overlay */}
-          <ParticleCanvas
-            ref={particleCanvasRef}
-            notifications={floatingNotifications}
-            onRemoveNotification={removeNotification}
-          />
-
-          {/* The 5x8 Grid Board + Bottom Launcher Row */}
+          {/* PixiJS-Powered Gameplay Board (5x8 Grid, Tiles, Animations & Particle FX) */}
           <GameBoard
+            ref={particleCanvasRef}
             grid={grid}
             hoverCol={hoverCol}
             incomingValue={currentValue}
@@ -1559,6 +1675,8 @@ export default function App() {
             bonusRushMax={BONUS_RUSH_MAX_MERGES}
             isBonusRushActive={isBonusRushActive}
             bonusRushTimeRemaining={bonusRushTimeRemaining}
+            notifications={floatingNotifications}
+            onRemoveNotification={removeNotification}
           />
 
           {/* Growing Cascade Multiplier Badge (x2, x3, x4...) */}
@@ -1746,7 +1864,25 @@ export default function App() {
         onClose={() => setMilestoneOpen(false)}
       />
       <TutorialModal isOpen={tutorialOpen} onClose={() => setTutorialOpen(false)} />
-      <GameOverModal isOpen={gameOverOpen} stats={stats} onRestart={handleRestart} />
+      <GameOverModal
+        isOpen={gameOverOpen}
+        stats={stats}
+        onRestart={handleRestart}
+        onOpenLeaderboard={() => {
+          setGameOverOpen(false);
+          setLeaderboardOpen(true);
+        }}
+      />
+      <LeaderboardModal
+        isOpen={leaderboardOpen}
+        score={stats.score}
+        highestTile={stats.highestTile}
+        onClose={() => setLeaderboardOpen(false)}
+        onPlayAgain={() => {
+          setLeaderboardOpen(false);
+          handleRestart();
+        }}
+      />
     </main>
   );
 }

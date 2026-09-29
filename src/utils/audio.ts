@@ -1,6 +1,8 @@
 class SoundController {
   private ctx: AudioContext | null = null;
   private muted: boolean = false;
+  private hostMuted: boolean = false;
+  private hostPaused: boolean = false;
 
   constructor() {
     // Lazy init audio context on first user interaction
@@ -30,6 +32,30 @@ class SoundController {
     return this.muted;
   }
 
+  public isEffectiveMuted(): boolean {
+    return this.muted || this.hostMuted || this.hostPaused;
+  }
+
+  public getEffectiveMuted(): boolean {
+    return this.isEffectiveMuted();
+  }
+
+  public setHostMuted(muted: boolean): void {
+    this.hostMuted = muted;
+  }
+
+  public isHostMuted(): boolean {
+    return this.hostMuted;
+  }
+
+  public setHostPaused(paused: boolean): void {
+    this.hostPaused = paused;
+  }
+
+  public isHostPaused(): boolean {
+    return this.hostPaused;
+  }
+
   public toggleMute(): boolean {
     this.muted = !this.muted;
     try {
@@ -41,7 +67,7 @@ class SoundController {
   }
 
   public playShoot() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -68,7 +94,7 @@ class SoundController {
   }
 
   public playSettle() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -95,7 +121,7 @@ class SoundController {
   }
 
   public playMerge(tileValue: number, combo = 1) {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -139,7 +165,7 @@ class SoundController {
   }
 
   public playSquareMerge() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -172,7 +198,7 @@ class SoundController {
   }
 
   public playTripleMerge() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -206,7 +232,7 @@ class SoundController {
   }
 
   public playBonusRush() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -240,7 +266,7 @@ class SoundController {
   }
 
   public playGameOver() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -275,7 +301,7 @@ class SoundController {
    * 3x Combo Tier: High-intensity, resonant brass/glass bell sound with rich harmonics
    */
   public playBellCombo3x() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -317,7 +343,7 @@ class SoundController {
    * 4x Combo Tier: High-intensity arcade/retro 'level-up' ascending chime arpeggio with shimmering glissando
    */
   public playLevelUpChime4x() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 
@@ -373,7 +399,7 @@ class SoundController {
    * 5x+ Combo Tier: Epic, thunderous 'mythic' gong with deep sub-bass impact and shimmering metallic overtones
    */
   public playMythicGong5x() {
-    if (this.muted) return;
+    if (this.isEffectiveMuted()) return;
     this.init();
     if (!this.ctx) return;
 

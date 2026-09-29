@@ -2,6 +2,7 @@ import React from 'react';
 import { TileBlock } from './TileBlock';
 import { ArrowLeftRight } from 'lucide-react';
 import { soundFx } from '../utils/audio';
+import { CLS } from '../shared/tokens';
 
 interface ShooterControlsProps {
   currentValue: number;
@@ -34,7 +35,7 @@ export const ShooterControls: React.FC<ShooterControlsProps> = ({
             onSwapNext();
           }}
           title="Đổi với khối tiếp theo"
-          className="w-7 h-7 rounded-xl bg-[#222836] hover:bg-slate-700 active:scale-90 text-amber-400 flex items-center justify-center transition border border-slate-700/60 shadow"
+          className="w-7 h-7 rounded-xl bg-[#222836] hover:bg-slate-700 active:scale-90 text-amber-400 flex items-center justify-center transition border border-slate-700/60 shadow cursor-pointer"
         >
           <ArrowLeftRight className="w-3.5 h-3.5" />
         </button>
